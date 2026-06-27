@@ -62,7 +62,7 @@ pi --print "Summarize this repository"
 
 ```
 --model              Qwythos-9B-Claude-Mythos-5-1M-Q4_K_M.gguf
---ctx-size           16384
+--ctx-size           32768
 --n-gpu-layers       999      (all layers on Metal)
 --flash-attn         on
 --cache-type-k       q8_0     (8-bit KV cache, saves memory)
@@ -74,7 +74,20 @@ pi --print "Summarize this repository"
 --repeat-penalty     1.05
 ```
 
-Expected on Apple M4 16GB: **~16 tokens/sec** generation, **~5.7 GB RSS**.
+Expected on Apple M4 16GB: **~16 tokens/sec** generation, **~6.0 GB RSS**.
+
+### Why 32K context?
+
+Real benchmarks on M4 16GB showed 32K + q8_0 is a free upgrade over 16K:
+
+| Config | Idle RSS | Gen at <2K fill | Gen at 7.7K fill |
+|--------|---------:|----------------:|-----------------:|
+| 16K + q8_0 | 5,899 MB | 16.0 t/s | 14.4 t/s |
+| **32K + q8_0** | **6,172 MB** | **16.1 t/s** | **15.1 t/s** |
+
+Same speed, +273 MB memory, 2× context headroom. The only theoretical cost is
+TTFB when context is actually filled to 32K (~3.5 min), but in real agent loops
+you almost never hit that — pi's prompt cache absorbs repeated prefixes.
 
 ## Environment variables
 
