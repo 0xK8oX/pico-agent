@@ -29,13 +29,21 @@ Then in any project:
 
 ```bash
 cd /your/project
-pi --model Qwythos
+pi
+```
+
+Qwythos is set as the default model — no `--model` flag needed. To override
+per-run:
+
+```bash
+pi --model Qwythos           # explicit
+pi --model <other-provider>:<model>
 ```
 
 Or non-interactive:
 
 ```bash
-pi --print --model Qwythos "Summarize this repository"
+pi --print "Summarize this repository"
 ```
 
 ## What the setup script does
@@ -46,6 +54,7 @@ pi --print --model Qwythos "Summarize this repository"
 | 2 | Clones and builds `llama.cpp` with Metal GPU support |
 | 3 | Installs the `pi` coding agent globally via npm |
 | 4 | Writes a pi extension that registers Qwythos as a custom OpenAI-compatible provider |
+| 4b | Sets Qwythos as pi's default model (`defaultProvider` + `defaultModel` in `~/.pi/agent/settings.json`) |
 | 5 | Starts `llama-server` with M4-optimized flags |
 | 6 | Verifies server health + pi can see the model |
 

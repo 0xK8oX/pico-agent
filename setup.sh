@@ -200,6 +200,40 @@ TS
 }
 
 # ============================================================================
+# 4b. Set Qwythos as pi's default model
+# ============================================================================
+set_default_model() {
+  log "Step 4b: Set Qwythos as pi's default model"
+
+  local settings_file="$HOME/.pi/agent/settings.json"
+  mkdir -p "$(dirname "$settings_file")"
+
+  if [[ -f "$settings_file" ]]; then
+    # Merge in defaultProvider/defaultModel if missing
+    python3 - "$settings_file" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    s = json.load(f)
+s.setdefault("defaultProvider", "qwythos-local")
+s.setdefault("defaultModel", "Qwythos")
+with open(path, "w") as f:
+    json.dump(s, f, indent=2)
+    f.write("\n")
+PY
+  else
+    cat > "$settings_file" <<'JSON'
+{
+  "theme": "dark",
+  "defaultProvider": "qwythos-local",
+  "defaultModel": "Qwythos"
+}
+JSON
+  fi
+  info "Settings updated: $settings_file (defaultProvider=qwythos-local, defaultModel=Qwythos)"
+}
+
+# ============================================================================
 # 5. Start llama-server
 # ============================================================================
 start_server() {
@@ -272,8 +306,11 @@ verify() {
   echo "$resp" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print('  ->', d.get('choices',[{}])[0].get('message',{}).get('content','<no content>')[:200])" 2>/dev/null || echo "  (raw) $resp" | head -c 300
 
   echo
-  log "All set. Use pi:"
+  log "All set. Use pi (Qwythos is the default model):"
   echo "    cd /your/project"
+  echo "    pi"
+  echo
+  echo "  Or override per-run:"
   echo "    pi --model Qwythos"
   echo
   echo "  Server log:  /tmp/picoagent-server.log"
@@ -295,6 +332,7 @@ main() {
   build_llama
   install_pi
   register_extension
+  set_default_model
   start_server
   verify
 }
